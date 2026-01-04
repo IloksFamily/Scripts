@@ -33,33 +33,20 @@ fin=0
 print('>...modules loaded')
 
 
-def constructeur(fichier, listeBMD, listeimgBMD):
+def constructeur(fichier, listeBMD, listeimgBMD, listelgBMD):
     mode='graph'
-
     xgraph=0
-
     ygraph=0
-
     xecran=0
-
     perso_type_select=0
-
     bloc_type_select=-1
-
-    BLACK = ( 0, 0, 0)                         
-
+    BLACK = ( 0, 0, 0)
     WHITE = (255, 255, 255)
-
     RED = (255, 0, 0)
-
     GREEN = ( 0,255, 0)
-
     BLUE = ( 0, 0, 255)
-
     h_mario=48
-
     l_mario=36
-
 
     xperso=0
     yperso=0
@@ -175,12 +162,22 @@ def constructeur(fichier, listeBMD, listeimgBMD):
 ############################################################################################################################################################################################
 
     pygame.key.set_repeat(0)
+    def cont(mouse, t, i):
+        type = ["bloc", "perso", "decor"][t]
+        return eval(f"{type}x")[i] < mouse[0] < eval(f"{type}x")[i] + listelgBMD[t][listeBMD.index(eval(f"{type}_type")[i])][0] and eval(f"{type}y")[i] < mouse[1] < eval(f"{type}y")[i] + listelgBMD[t][listeBMD.index(eval(f"{type}_type")[i])][1]
     while True:
         keysi=[]
         keys=pygame.key.get_pressed()
+        clic = [None, None]
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 keysi.append(event.key)
+            if event.type == pygame.MOUSEBUTTONUP and event.button==1:
+                clic[0] = pygame.mouse.get_pos()
+                if mode == 'graph': xgraph, ygraph = clic[0]
+            if event.type == pygame.MOUSEBUTTONUP and event.button==3:
+                clic[1] = pygame.mouse.get_pos()
+
         if mode=='graph':
             if keys[K_LCTRL]:
                 speed=10
@@ -200,7 +197,7 @@ def constructeur(fichier, listeBMD, listeimgBMD):
                 ygraph +=5*speed
             if keys[K_UP]:
                 ygraph -=5*speed
-            if K_RETURN in keysi: # touche ,
+            if K_RETURN in keysi or clic[0] is not None: # touche ,
                 print('a')
                 if perso_type_select>=0:
                     persox.append(int(xgraph))
@@ -457,6 +454,28 @@ def constructeur(fichier, listeBMD, listeimgBMD):
                         else: xecran=xgraph-100
                     if xgraph>xecran+900:
                         xecran=xgraph-900
+            if clic[1]:
+                candidates = []
+                for i in range(len(bloc_type)):
+                    if cont(clic[1],0,i):
+                        candidate.append([0,i])
+                for i in range(len(perso_type)):
+                    if cont(clic[1],1,i):
+                        candidate.append([1,i])
+                if candidates == []:
+                    for i in range(len(decor_type)):
+                        if cont(clic[1],2,i):
+                            candidate.append([2,i])
+                if candidates != []:
+                    if len(candidates) > 1:
+                        ls = []
+                        for i in candidates:
+                            ls.append(sum(listelgBMD[listeBMD.index(eval(f"{i[1]}_type"))]))
+                        candidates = [candidates[ls.index(max(ls))]]
+                    t = ["bloc", "perso", "decor"][candidates[0][0]]
+                    type_select = t
+                    exec(f"{t}_select = i")
+
             if type_select=='bloc' and bloc_type[bloc_select]=='Colline':
                 d1=bloc_autre[bloc_select][0][1]
                 d2=bloc_autre[bloc_select][1][1]
@@ -476,6 +495,7 @@ def constructeur(fichier, listeBMD, listeimgBMD):
                     if decor_profondeur[decor_select]<speed*0.1+0.05: decor_profondeur[decor_select]=0.1
                     else: decor_profondeur[decor_select]-=speed*0.1
                     decor_profondeur[decor_select]=int(100*decor_profondeur[decor_select])/100
+
                     
         if mode=='perso':
             if keys[K_LEFT] and xperso>0:
@@ -882,4 +902,4 @@ for name, objet in inspect.getmembers(ClassesBlocs13):
             listeBMD[i].append(name)
             listelgBMD[i].append([objet.lgx,objet.lgy])
 print(listeBMD)
-constructeur(fichier, listeBMD, listeimgBMD)
+constructeur(fichier, listeBMD, listeimgBMD, listelgBMD)
